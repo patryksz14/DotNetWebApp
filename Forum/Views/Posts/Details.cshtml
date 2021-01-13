@@ -1,0 +1,160 @@
+﻿@model Forum.Models.Post
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Post</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Title)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Title)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Content)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Content)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.CreationDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.CreationDate)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.LastEditionDate)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.LastEditionDate)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Category)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Category.Name)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Creator)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Creator.Login)
+        </dd>
+    </dl>
+</div>
+<div>
+    @{
+        var login = new byte[20];
+        var id = new byte[20];
+        bool isLogin = Context.Session.TryGetValue("login", out login);
+        var userid = "";
+        string loginString = "";
+        if (login != null)
+        {
+            loginString = System.Text.Encoding.UTF8.GetString(login);
+            Context.Session.TryGetValue("id", out id);
+            userid = System.Text.Encoding.UTF8.GetString(id);
+            <h4>Add a response:</h4><br>
+            <div class="row">
+                <div class="col-md-4">
+                    <form asp-action="AddComment" asp-controller="Comments">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        <div class="form-group">
+                            <label id="content" class="control-label"></label>
+                            <input id="content" class="form-control" name="content" />
+
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Create" class="btn btn-primary" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+    @if (userid.Equals(Model.CreatorId.ToString()))
+    {<a asp-action="Edit" asp-route-id="@Model.Id">Edit</a><br>}
+    <h4>Answers:</h4>
+    @foreach (Comment com in Model.Comment)
+    {
+        <div>
+            @com.Content <br>
+            @com.Creator.Nick
+            @com.CreationDate 
+            Approved points: @com.Point.Count
+        <form asp-action="AddPoint" asp-controller="Points">
+            <input type="hidden" id="commentid_@com.Id" name="commentid" value="@com.Id" />
+            @if (login != null)
+            {
+                Point point = new Point();
+                point = com.Point.SingleOrDefault(p=>p.CommentId==com.Id && userid.Equals(p.UserId.ToString()));
+                
+            @if (point!=null)
+            {
+                <p>Is this comment helpful? <input id="@com.Id" type="checkbox" name="ishelpful" checked /></p>
+            }
+            else
+            {
+                <p>Is this comment helpful? <input id="@com.Id" type="checkbox" name="ishelpful" /></p>
+            }
+            }
+        </form>
+            @if (userid.Equals(com.Creator.Id.ToString()))
+            {
+                <a asp-action="Edit" asp-route-id="@com.Id" asp-controller="Comments">Edit</a>
+            }
+        </div><br>
+
+    }
+    <a asp-action="Index">Back to List</a><button onclick="show()">but</button>
+</div>
+@section Scripts
+{
+    <script>
+        function show() {
+            alert("show");
+        }
+        $(document).ready(function () {
+            $('input[type="checkbox"]').click(function () {
+                var id = $(this).attr("id");
+                if ($(this).is(":checked")) {
+                    var val1 = $("input#commentid_"+id).val();
+                    $.ajax(
+                        {
+                            async: true,
+                            url: "/Points/AddPoint",
+                            data: { commentid: val1},
+                            dataType: "text",
+                            type: 'POST',
+                            success: function (msg) {
+                            },
+                            error: function (error) {
+                                console.log(error);
+                            }
+                        });
+                }
+                else if ($(this).is(":not(:checked)")) {
+                    $.ajax(
+                        {
+                            async: true,
+                            type: "POST",
+                            url: "/Points/DeletePoint",
+                            data: { commentid: id},
+                            dataType: "text",
+                            success: function (msg) {
+                            },
+                            error: function (req, status, error) {
+                            }
+                        });
+                }
+
+            });
+        });
+    </script>
+}

@@ -1,0 +1,96 @@
+﻿@model IEnumerable<Forum.Models.Post>
+
+@{
+    ViewData["Title"] = "Index";
+}
+@{
+    var login = new byte[20];
+    var id = new byte[20];
+    bool isLogin = Context.Session.TryGetValue("login", out login);
+    var userid = "";
+    string loginString = "";
+    if (login != null)
+    {
+        loginString = System.Text.Encoding.UTF8.GetString(login);
+        Context.Session.TryGetValue("id", out id);
+        userid = System.Text.Encoding.UTF8.GetString(id);
+    }
+    @if (!(!isLogin || (isLogin && loginString.Length == 0)))
+    {
+        <h1>Index</h1>
+
+        <p>
+            <a asp-action="Create">Create New</a>
+        </p>
+    }
+    }
+<table class="table">
+
+
+    @{
+        var currentCategory = "";
+        @foreach (var item in Model)
+        {
+
+            @if (!currentCategory.Equals(item.Category.Name))
+            {
+                currentCategory = item.Category.Name;
+
+
+                    <tr>
+                        <td>
+                            <h1>@currentCategory</h1>
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Title)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.Content)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.CreationDate)
+                        </th>
+                        <th>
+                            @Html.DisplayNameFor(model => model.LastEditionDate)
+                        </th>
+
+                        <th>
+                            @Html.DisplayNameFor(model => model.Creator)
+                        </th>
+                    </tr>
+                    
+            }
+                <tr>
+                    <td>
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Posts"
+                           asp-action="Details" asp-route-id="@item.Id">@Html.DisplayFor(modelItem => item.Title)</a>
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Content)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CreationDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.LastEditionDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Creator.Nick)
+                    </td>
+                    <td>
+                       
+                        @if (userid.Equals(item.CategoryId.ToString()))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id"> Delete </a>
+                        }
+                    </td>
+                </tr>
+         }
+    }
+               
+            </table>
